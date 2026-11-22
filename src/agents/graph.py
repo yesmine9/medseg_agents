@@ -29,10 +29,11 @@ def run_attempt(seg, img, strategy, cfg):
     x = _clahe_view(img) if strategy == "clahe" else img
     p_plain = _proba(seg, x)
     p_h = np.flip(_proba(seg, np.flip(x, 1)), 1)
-    views = [p_plain, p_h]
-    if strategy == "tta":
-        views.append(np.flip(_proba(seg, np.flip(x, 0)), 0))
-    proba = np.mean(views, axis=0)
+    if strategy == "tta":   # seule stratégie qui moyenne les vues ; base/clahe = passage simple (== U-Net seul)
+        p_v = np.flip(_proba(seg, np.flip(x, 0)), 0)
+        proba = np.mean([p_plain, p_h, p_v], axis=0)
+    else:
+        proba = p_plain
     mask = proba > 0.5
     std = np.squeeze(np.asarray(seg.segment_mc(np.ascontiguousarray(x), cfg["mc_T"])[-1], dtype=np.float32))
     flip_dice = dice_bool(p_plain > 0.5, p_h > 0.5)
@@ -66,7 +67,10 @@ def build_graph(segmenter, cfg: dict | None = None):
             decision = "escalate"
         msg = (f"[critic] tentative {k} : risque={risk:.3f} (inc={f['unc_ratio']:.2f}, "
                f"flip={f['flip_dice']:.2f}, comp={f['n_components']}, aire={f['area_frac']:.3f}) -> {decision}")
-        out = {"risk": risk, "decision": decision, "best": best, "history": s["history"] + [msg]}
+        att = s.get("attempts", []) + [{"attempt": k, "strategy": s["strategy"], "risk": risk,
+                                        "features": f, "mask": s["mask"]}]
+        out = {"risk": risk, "decision": decision, "best": best, "attempts": att,
+               "history": s["history"] + [msg]}
         if decision == "retry":
             out["attempt"] = k + 1
         return out
@@ -97,4 +101,4 @@ def build_graph(segmenter, cfg: dict | None = None):
 
 
 def run_one(graph, image: np.ndarray, stem: str = ""):
-    return graph.invoke({"image": image, "stem": stem, "attempt": 0, "history": []})
+    return graph.invoke({"image": image, "stem": stem, "attempt": 0, "history": [], "attempts": []})

@@ -64,3 +64,13 @@ def test_retry_puis_accept_via_clahe():
 def test_verite_terrain_absente_de_l_etat():
     out = run_one(build_graph(FakeSeg()), _contrasted(), "d")
     assert not any(k in out for k in ("gt", "mask_gt", "ground_truth"))
+
+
+def test_base_egale_passage_simple_et_tentatives_enregistrees():
+    seg = FakeSeg()
+    out = run_one(build_graph(seg), _contrasted(), "e")
+    _, p = seg.segment(_contrasted())
+    assert np.array_equal(out["attempts"][0]["mask"], p > 0.5)     # base == U-Net seul
+    assert len(out["attempts"]) == 1
+    bad = run_one(build_graph(seg, {"tau_risk": -1.0}), _contrasted(), "f")
+    assert [a["attempt"] for a in bad["attempts"]] == [0, 1, 2]

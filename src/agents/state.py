@@ -13,6 +13,7 @@ class AgentState(TypedDict, total=False):
     risk: float              # score de risque (0 = sûr, 1 = très douteux)
     decision: str            # accept | retry | escalate
     best: dict               # meilleure tentative (risque minimal) : mask, risk, attempt, features
+    attempts: list           # toutes les tentatives : attempt, strategy, risk, features, mask
     history: list            # trace lisible de toutes les décisions
     final_mask: np.ndarray
     status: str              # accepted | accepted_after_retry | needs_human
