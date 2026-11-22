@@ -1,0 +1,12 @@
+{
+  "mc_T": 10,
+  "std_thr": 0.10,
+  "ratio_cap": 1.0,
+  "tiny_area_frac": 0.002,
+  "max_components": 3,
+  "w_unc": 0.5,
+  "w_flip": 0.3,
+  "w_shape": 0.2,
+  "tau_risk": 0.15,
+  "max_retries": 2
+}
